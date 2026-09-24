@@ -1,1 +1,31 @@
+name: Prueba Self-Hosted Runner
 
+on:
+  push:
+
+jobs:
+  comprobar-tokens:
+    runs-on: self-hosted
+
+    steps:
+      - name: Comprobar DEV_TOKEN
+        shell: powershell
+        env:
+          DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
+        run: |
+          if ($env:DEV_TOKEN -ne $env:LOCAL_DEV_TOKEN) {
+            Write-Error "DEV_TOKEN no coincide con LOCAL_DEV_TOKEN"
+            exit 1
+          }
+          Write-Host "DEV_TOKEN correcto"
+
+      - name: Comprobar PROD_TOKEN
+        shell: powershell
+        env:
+          PROD_TOKEN: ${{ secrets.PROD_TOKEN }}
+        run: |
+          if ($env:PROD_TOKEN -ne $env:LOCAL_PROD_TOKEN) {
+            Write-Error "PROD_TOKEN no coincide con LOCAL_PROD_TOKEN"
+            exit 1
+          }
+          Write-Host "PROD_TOKEN correcto"
