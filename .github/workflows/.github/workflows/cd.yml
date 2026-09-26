@@ -1,0 +1,51 @@
+name: CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+jobs:
+  deploy-prod:
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Incrementar AppVersion
+        shell: powershell
+        run: |
+          $content = Get-Content README.md -Raw
+          if ($content -match 'AppVersion=(\d+)') {
+            $version = [int]$matches[1] + 1
+            $content = $content -replace 'AppVersion=\d+', "AppVersion=$version"
+            Set-Content README.md $content
+
+            git config user.name "github-actions"
+            git config user.email "github-actions@github.com"
+            git add README.md
+            git commit -m "Incrementar AppVersion"
+            git push origin main
+          } else {
+            Write-Error "No se encontró AppVersion en README.md"
+            exit 1
+          }
+
+      - name: Validar PROD_TOKEN
+        shell: powershell
+        env:
+          PROD_TOKEN: ${{ secrets.PROD_TOKEN }}
+        run: |
+          if ($env:PROD_TOKEN -ne $env:LOCAL_PROD_TOKEN) {
+            Write-Error "PROD_TOKEN no coincide con LOCAL_PROD_TOKEN"
+            exit 1
+          }
+          Write-Host "PROD_TOKEN correcto"
