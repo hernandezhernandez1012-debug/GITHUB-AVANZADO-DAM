@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+    update-readme:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Actualizar README
+        shell: powershell
+        run: |
+          Add-Content README.md "Nueva feature integrada"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add README.md
+          git commit -m "Actualizar README con nueva feature"
+          git push origin HEAD:${{ github.head_ref }}
+  validate-dev:
+    needs: update-readme
+    runs-on: self-hosted
+
+    steps:
+      - name: Validar DEV_TOKEN
+        shell: powershell
+        env:
+          DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
+        run: |
+          if ($env:DEV_TOKEN -ne $env:LOCAL_DEV_TOKEN) {
+            Write-Error "DEV_TOKEN no coincide con LOCAL_DEV_TOKEN"
+            exit 1
+          }
+          Write-Host "DEV_TOKEN correcto"
