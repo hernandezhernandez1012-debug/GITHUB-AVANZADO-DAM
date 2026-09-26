@@ -1,1 +1,2 @@
 Nueva funcionalidad creada desde la rama feature.
+Cambio adicional para ejecutar CI.
